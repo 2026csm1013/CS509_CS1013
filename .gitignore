@@ -1,0 +1,5 @@
+*.o
+*.out
+*.exe
+run_wrapper
+gemm_runner
