@@ -32,36 +32,15 @@ assignment_01/
 
 
 ## 📊 Test Results & Timing Notes
+## 📊 Test Results & Timing Notes
 
 Execution times were recorded using `std::chrono::high_resolution_clock` across all test files:
 
-* **Test 1: Basic Sanity Check (2 x 3 x 2)**
-  * **Simple GEMM:** 0.000 ms
-  * **Tiled GEMM:** 0.000 ms
-  * **Takeaway:** Checked that both algorithms produce identical outputs and that matrix dimensions line up properly.
-
-* **Test 2: Small Input (32 x 32 x 32)**
-  * **Simple GEMM:** 0.000 ms
-  * **Tiled GEMM:** 0.000 ms
-  * **Takeaway:** The matrix data easily fits inside L1 cache, so both methods finish immediately with no detectable delay.
-
-* **Test 3: Moderate Input (128 x 128 x 128)**
-  * **Simple GEMM:** 2.000 ms
-  * **Tiled GEMM:** 1.999 ms
-  * **Takeaway:** Times are virtually identical. Memory retrieval isn't slowing down execution at this scale yet.
-
-* **Test 4: Medium Input (256 x 256 x 256)**
-  * **Simple GEMM:** 13.001 ms
-  * **Tiled GEMM:** 13.997 ms
-  * **Takeaway:** The direct approach is slightly faster here. Running six nested loops in the tiled version adds minor control overhead that isn't offset by cache savings while the data still fits in memory.
-
-* **Test 5: Large Input (512 x 512 x 512)**
-  * **Simple GEMM:** 120.518 ms
-  * **Tiled GEMM:** 116.624 ms
-  * **Takeaway:** This is the inflection point where cache-blocking takes the lead as memory bandwidth begins to bottleneck standard loop iterations.
-
-* **Test 6: Stress Test (1000 x 1000 x 1000)**
-  * **Simple GEMM:** 1642.512 ms
-  * **Tiled GEMM:** 1049.240 ms
-  * **Takeaway:** Tiled multiplication drops overall runtime by roughly 593 ms (~36% speedup). Keeping sub-matrices constrained to $32 \times 32$ blocks maximizes cache hits and avoids constant round-trips to main RAM.
-
+| Test Case | Matrix Dimensions ($M \times K \times N$) | Simple GEMM Time | Tiled GEMM Time |
+| :--- | :--- | :--- | :--- |
+| **Test 1: Basic Sanity Check** | $2 \times 3 \times 2$ | 0.000 ms | 0.000 ms |
+| **Test 2: Small Input** | $32 \times 32 \times 32$ | 0.000 ms | 0.000 ms |
+| **Test 3: Moderate Input** | $128 \times 128 \times 128$ | 2.000 ms | 1.999 ms |
+| **Test 4: Medium Input** | $256 \times 256 \times 256$ | 13.001 ms | 13.997 ms |
+| **Test 5: Large Input** | $512 \times 512 \times 512$ | 120.518 ms | 116.624 ms |
+| **Test 6: Stress Test** | $1000 \times 1000 \times 1000$ | 1642.512 ms | 1049.240 ms |
