@@ -50,9 +50,11 @@ int main(int argc, char* argv[]) {
         cout << "==================================================\n";
         cout << " 1. Run GEMM (Simple & Blocking Implementation)\n";
         cout << " 2. Run CSR Graph Representation\n";
-        cout << " 3. Exit Wrapper\n";
+        cout << " 3. Run Bellman-Ford Shortest Path (CSR)\n";
+        cout << " 4. Run Floyd-Warshall All-Pairs Shortest Path\n";
+        cout << " 5. Exit Wrapper\n";
         cout << "==================================================\n";
-        cout << "Enter your choice (1-3): ";
+        cout << "Enter your choice (1-5): ";
 
         if (!(cin >> choice)) {
 
@@ -61,7 +63,7 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        if (choice == 3) {
+        if (choice == 5) {
 
             cout << "Exiting Common Wrapper. Goodbye!\n";
             break;
@@ -81,8 +83,20 @@ int main(int argc, char* argv[]) {
                 runCommand("assignment_01", "csr_runner.exe", testFile);
                 break;
 
+            case 3:
+                cout << "Enter Bellman-Ford test file path (e.g., tests/bf_10.txt): ";
+                cin >> testFile;
+                runCommand("assignment_02", "bellman_ford_runner.exe", testFile);
+                break;
+
+            case 4:
+                cout << "Enter Floyd-Warshall test file path (e.g., tests/fw_10.txt): ";
+                cin >> testFile;
+                runCommand("assignment_02", "floyd_warshall_runner.exe", testFile);
+                break;
+
             default:
-                cout << "Invalid choice! Please select 1, 2, or 3.\n";
+                cout << "Invalid choice! Please select 1 to 5.\n";
                 break;
         }
     }
