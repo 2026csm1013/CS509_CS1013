@@ -1,3 +1,6 @@
+#ifndef CSR_HPP
+#define CSR_HPP
+
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -23,7 +26,7 @@ struct csrGraph{
     vector<int> valList;
 };
 
-csrGraph graphToCSR(const string& inputFile) {
+inline csrGraph graphToCSR(const string& inputFile) {
 
     ifstream file(inputFile);
 
@@ -110,7 +113,7 @@ csrGraph graphToCSR(const string& inputFile) {
 
 
 //to print CSR 
-void printCSR(const csrGraph& graph) {
+inline void printCSR(const csrGraph& graph) {
     cout<<"Vertices (V): " <<graph.numNodes<<endl;
     cout<<"Edges (E): " <<graph.numEdges<<endl;
 
@@ -135,18 +138,4 @@ void printCSR(const csrGraph& graph) {
    
 }
 
-int main(int argc,char* argv[]) {
-
-    if(argc <2) {
-        cerr <<"Usage:"<< argv[0]<<"<input_file_path>\n";
-        return 1;
-    }
-
-    string filePath = argv[1];
-
-    //parse input file and output CSR 
-    csrGraph g= graphToCSR(filePath);
-    printCSR(g);
-
-    return 0;
-}
+#endif // CSR_HPP
