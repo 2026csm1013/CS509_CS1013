@@ -1,44 +1,25 @@
-# Assignment 1: Execution and Performance Report
+# Assignment 2: Shortest Path Graph Algorithms (Bellman-Ford & Floyd-Warshall)
 
-**Course:** CS509 – Software Programming Lab  
-**Assignment:** Assignment 1 – GEMM Task  
-**Task Type:** Individual Assignment
-
----
-
-## Student Information
-
-| Field | Details |
-|---|---|
-| **Name** | Fardeen Khan Nabi Khan |
-| **Entry Number** | 2026CSM1013 |
-| **GitHub Repository** | [CS509_CS1013](https://github.com/2026csm1013/CS509_CS1013.git) |
+**Name:** Fardeen Khan Nabi Khan
+**Entry Number:** 2026CSM1013
+**Course:** CS509 (PG Software Lab), M.Tech CSE
 
 ---
 
-# 1. Introduction & Overview
+## 1. Introduction & Overview
 
-This report presents the implementation details, execution outputs, and benchmarking results for **Assignment 1 (GEMM Task)**.
+This directory contains the source implementations, compiled drivers, test cases, and benchmarking results for **Assignment 2 (Individual Task: Graph Shortest Path Algorithms)**.
 
-The implementation includes two versions of General Matrix-Matrix Multiplication (GEMM):
+The implementation includes:
 
-1. **Simple GEMM** – Direct nested-loop matrix multiplication.
-2. **Tiled/Blocking GEMM** – Cache-optimized matrix multiplication using loop tiling/blocking.
+* **Bellman-Ford (Single-Source Shortest Path):** Computes shortest distances from a single source vertex to all reachable vertices on directed graphs supporting negative edge weights using Compressed Sparse Row (CSR) representation. It includes a $V^{\text{th}}$ pass for negative cycle detection.
+* **Floyd-Warshall (All-Pairs Shortest Path):** Computes shortest paths between all pairs of vertices in a directed graph using dynamic programming over an adjacency matrix. It identifies negative cycles by inspecting matrix diagonals where $\text{dist}[i][i] < 0$.
 
-The objective of this assignment is to compare the execution performance of the two approaches and analyze the effect of cache-aware optimization on large matrix operations.
+### Timing Rule Compliance
 
----
-
-## 1.1 Timing Rule Compliance
-
-The benchmarking methodology strictly follows the assignment timing guidelines:
-
-- The execution timer starts **immediately before** invoking the matrix multiplication function.
-- The timer stops **immediately after** the matrix multiplication function completes.
-- Input file reading and text parsing are **excluded** from the measured execution time.
-- Matrix memory allocation is **excluded** from the measured execution time.
-- Result printing is **excluded** from the measured execution time.
-- Each reported runtime represents the **average of 4 consecutive execution runs** to improve measurement stability and accuracy.
+* The execution timer begins immediately before invoking the shortest path algorithm and stops immediately after its completion, including the negative-cycle detection check.
+* File reading, text parsing, dynamic matrix allocations, adjacency-list-to-CSR conversion, and result printing are completely excluded from the measured execution time.
+* All reported runtime values represent the exact average calculated over **4 consecutive benchmark runs**.
 
 ---
 
@@ -46,187 +27,466 @@ The benchmarking methodology strictly follows the assignment timing guidelines:
 
 ## 2.1 Project Layout
 
-The project follows the following directory structure:
-
 ```text
 CS509_CS1013/
-├── driver/
-│   └── gemm_runner.exe
-│       └── Compiled GEMM executable driver
+├── common_wrapper/
+│   ├── wrapper.cpp                  # Interactive menu-driven build/run interface
+│   └── wrapper_runner.exe           # Compiled wrapper executable
 │
-├── src/
-│   └── gemm.cpp
-│       └── GEMM algorithm implementations and runner main()
+├── common/
+│   └── csr_graph.hpp                # Shared CSR conversion helper for Bellman-Ford
 │
-└── tests/
-    ├── gemm_test_01.txt    # 2×3 and 3×2 matrix test
-    ├── gemm_test_02.txt    # 32×32 and 32×32 matrix test
-    ├── gemm_test_03.txt    # 128×128 and 128×128 matrix test
-    ├── gemm_test_04.txt    # 256×256 and 256×256 matrix test
-    ├── gemm_test_05.txt    # 512×512 and 512×512 matrix test
-    └── gemm_test_06.txt    # 1000×1000 and 1000×1000 matrix test
+├── assignment_02/
+│   ├── driver/
+│   │   ├── bellman_ford_runner.exe    # Compiled Bellman-Ford driver
+│   │   └── floyd_warshall_runner.exe  # Compiled Floyd-Warshall driver
+│   │
+│   ├── src/
+│   │   ├── bellman_ford.cpp           # Bellman-Ford SSSP implementation
+│   │   └── floyd_warshall.cpp         # Floyd-Warshall APSP implementation
+│   │
+│   └── tests/
+│       ├── bf_10.txt                  # Bellman-Ford test case (V=10)
+│       ├── bf_100.txt                 # Bellman-Ford test case (V=100)
+│       ├── bf_10000.txt               # Bellman-Ford test case (V=10,000)
+│       ├── bf_50000.txt               # Bellman-Ford test case (V=50,000)
+│       ├── bf_100000.txt              # Bellman-Ford test case (V=100,000)
+│       ├── bf_neg_cycle.txt           # Bellman-Ford negative-cycle test
+│       ├── fw_10.txt                  # Floyd-Warshall test case (V=10)
+│       ├── fw_100.txt                 # Floyd-Warshall test case (V=100)
+│       ├── fw_500.txt                 # Floyd-Warshall test case (V=500)
+│       ├── fw_1000.txt                # Floyd-Warshall test case (V=1,000)
+│       ├── fw_2000.txt                # Floyd-Warshall test case (V=2,000)
+│       └── fw_neg_cycle.txt           # Floyd-Warshall negative-cycle test
+│
+└── README.md
+```
 
-    3. GEMM Benchmark Execution Results
+### File Description
 
-Note: The execution times reported below represent the average of 4 independent benchmark runs.
+| File / Directory                                 | Description                                           |
+| ------------------------------------------------ | ----------------------------------------------------- |
+| `common_wrapper/wrapper.cpp`                     | Interactive menu-driven build and execution interface |
+| `common_wrapper/wrapper_runner.exe`              | Compiled wrapper executable                           |
+| `common/csr_graph.hpp`                           | Shared CSR graph conversion helper                    |
+| `assignment_02/driver/bellman_ford_runner.exe`   | Compiled Bellman-Ford driver                          |
+| `assignment_02/driver/floyd_warshall_runner.exe` | Compiled Floyd-Warshall driver                        |
+| `assignment_02/src/bellman_ford.cpp`             | Bellman-Ford SSSP algorithm implementation            |
+| `assignment_02/src/floyd_warshall.cpp`           | Floyd-Warshall APSP algorithm implementation          |
+| `assignment_02/tests/`                           | Bellman-Ford and Floyd-Warshall input test cases      |
 
-3.1 Benchmark Results
-Test File	Input Type / Size	Expected Output	Actual Output	Simple Time (AVG)	Blocking Time (AVG)	Block Size	Status
-gemm_test_01.txt	2×3 and 3×2	Result matrix	Result matrix	0.000 ms	0.000 ms	32	✅ Pass
-gemm_test_02.txt	32×32 and 32×32	Result matrix	Result matrix	0.000 ms	0.000 ms	32	✅ Pass
-gemm_test_03.txt	128×128 and 128×128	Result matrix	Result matrix	2.6713 ms	2.299 ms	32	✅ Pass
-gemm_test_04.txt	256×256 and 256×256	Result matrix	Result matrix	14.004 ms	15.702 ms	32	✅ Pass
-gemm_test_05.txt	512×512 and 512×512	Result matrix	Result matrix	120.518 ms	116.624 ms	32	✅ Pass
-gemm_test_06.txt	1000×1000 and 1000×1000	Result matrix	Result matrix	1642.512 ms	1049.240 ms	32	✅ Pass
+---
 
+## 2.2 Input Specifications
 
+### Bellman-Ford Weighted Adjacency List Format
 
-4. Key Performance Observations & Analysis
-4.1 Small Matrix Scale (N ≤ 32)
+**Input files:** `bf_*.txt`
 
-For smaller inputs, such as 2×3 × 3×2 and 32×32 × 32×32, both Simple GEMM and Tiled GEMM report approximately 0.000 ms.
+```text
+V E
+u0 degree neighbor1 weight1 neighbor2 weight2 ...
+...
+u(V-1) degree ...
+SOURCE s
+```
 
-At this scale, the matrices are sufficiently small that the data can be handled efficiently by the processor cache. Consequently, the benefits of cache blocking are negligible compared with the overhead of the computation itself.
+Where:
 
-4.2 Performance Improvement at Large Scale (1000×1000)
+* `V` = number of vertices
+* `E` = number of directed edges
+* `u` = source vertex of an adjacency-list entry
+* `degree` = number of outgoing edges
+* `neighbor` = destination vertex
+* `weight` = edge weight
+* `SOURCE s` = source vertex for the single-source shortest path computation
 
-The most significant performance difference is observed for the 1000×1000 matrix multiplication.
+The graph is represented internally using **Compressed Sparse Row (CSR)** format.
 
-Simple GEMM: 1642.512 ms
-Blocking GEMM: 1049.240 ms
+---
 
-The approximate performance improvement is:
+### Floyd-Warshall Dense Adjacency Matrix Format
 
-Improvement=
-1642.512
-1642.512−1049.240
-	​
+**Input files:** `fw_*.txt`
 
-×100
-≈36.1%
+```text
+V
+0 weight_01 INF weight_03 ...
+INF 0 weight_12 INF ...
+...
+```
 
-Thus, Tiled/Blocking GEMM achieves approximately 36.1% lower execution time than Simple GEMM for the 1000×1000 test case.
+Where:
 
-This improvement is primarily due to better cache locality. Blocking divides the matrices into smaller submatrices so that frequently accessed data can remain in the cache for longer, reducing expensive cache misses and improving data reuse.
+* `V` = number of vertices
+* `INF` denotes the absence of a direct edge between two vertices
+* Diagonal entries are initially `0`
 
-4.3 Overhead Threshold at 256×256
+The algorithm operates directly on the dense $V \times V$ adjacency matrix.
 
-For the 256×256 test case, blocking does not provide a performance advantage:
+---
 
-Simple GEMM: 14.004 ms
-Blocking GEMM: 15.702 ms
+# 3. Compilation & Execution
 
-Here, the blocking implementation is approximately 1.698 ms slower.
+All assignments and tests can be compiled and executed through the central wrapper interface.
 
-This behavior can be attributed to the additional loop-control and block-management overhead introduced by the tiled implementation. At this intermediate matrix size, the cache-locality benefits are not yet large enough to compensate for the additional overhead.
+## 3.1 Build Common Wrapper
 
-Therefore, blocking is not guaranteed to outperform the simple implementation for every matrix size.
+### Bash / Linux
 
-4.4 Performance Trend
+```bash
+g++ -O3 -std=c++17 common_wrapper/wrapper.cpp -o common_wrapper/wrapper_runner.exe
+```
 
-The benchmark results demonstrate the following trend:
+### PowerShell
 
-For very small matrices, the difference between the two approaches is negligible.
-At moderate sizes, blocking may introduce some overhead and can occasionally be slower.
-At larger sizes, cache locality becomes increasingly important.
-For the 1000×1000 matrix, blocking provides a substantial performance improvement.
+```powershell
+g++ -O3 -std=c++17 .\common_wrapper\wrapper.cpp -o .\common_wrapper\wrapper_runner.exe
+```
 
-This demonstrates that optimization techniques such as loop tiling are particularly beneficial for computation-intensive workloads involving large datasets.
+---
 
-5. Algorithmic Complexity Analysis
-5.1 Simple GEMM
+## 3.2 Run Common Wrapper
 
-The Simple GEMM implementation uses three nested loops to perform matrix multiplication.
+Launch the menu interface.
 
-For matrices:
+### Bash / Linux
 
-A
-M×K
-	​
+```bash
+./common_wrapper/wrapper_runner.exe
+```
 
-×B
-K×N
-	​
+### PowerShell
 
-=C
-M×N
-	​
+```powershell
+.\common_wrapper\wrapper_runner.exe
+```
 
+The interactive wrapper provides a common interface for:
 
-the time complexity is:
+1. Listing available assignments
+2. Compiling assignment drivers
+3. Running individual test files
+4. Running all test files
+5. Executing benchmark runs
 
-O(M×K×N)
+---
 
-For square matrices of size $N \times N$:
+## 3.3 Standalone Direct Driver Execution
 
-O(N
-3
-)
+### Run Bellman-Ford Directly
 
-Each element of the output matrix requires approximately $N$ multiplication and addition operations, and there are $N^2$ output elements.
+```powershell
+.\assignment_02\driver\bellman_ford_runner.exe .\assignment_02\tests\bf_10.txt
+```
 
-Space Complexity
+### Run Floyd-Warshall Directly
 
-The Simple GEMM implementation requires:
+```powershell
+.\assignment_02\driver\floyd_warshall_runner.exe .\assignment_02\tests\fw_10.txt
+```
 
-O(1)
+---
 
-auxiliary space, excluding the memory required to store the input matrices $A$, $B$, and output matrix $C$.
+# 4. Benchmark Execution Results
 
-5.2 Tiled / Blocking GEMM
+> **Note:** The execution times reported below represent the average calculated over **4 independent benchmark runs**.
 
-The Tiled/Blocking GEMM implementation divides the matrices into smaller blocks and performs multiplication block by block.
+## 4.1 Complete Benchmark Results
 
-The overall arithmetic complexity remains:
+| Algorithm      | Test File          | Vertices (V) | Edges (E) | Source | Negative Cycle | Expected Output      | Actual Output        |  Time (AVG) | Status   |
+| -------------- | ------------------ | -----------: | --------: | -----: | -------------- | -------------------- | -------------------- | ----------: | -------- |
+| Bellman-Ford   | `bf_10.txt`        |           10 |        20 |      0 | No             | Distances            | Distances            |      0.0 ms | **Pass** |
+| Bellman-Ford   | `bf_100.txt`       |          100 |       300 |      0 | No             | Distances            | Distances            |      0.0 ms | **Pass** |
+| Bellman-Ford   | `bf_10000.txt`     |       10,000 |    30,000 |      0 | No             | Distances            | Distances            |    1.999 ms | **Pass** |
+| Bellman-Ford   | `bf_50000.txt`     |       50,000 |   150,000 |      0 | No             | Distances            | Distances            |   15.949 ms | **Pass** |
+| Bellman-Ford   | `bf_100000.txt`    |      100,000 |   300,000 |      0 | No             | Distances            | Distances            |   27.529 ms | **Pass** |
+| Bellman-Ford   | `bf_neg_cycle.txt` |           10 |        25 |      0 | Yes            | Negative cycle: true | Negative cycle: true |      0.0 ms | **Pass** |
+| Floyd-Warshall | `fw_10.txt`        |           10 |        20 |    N/A | No             | Distance Matrix      | Distance Matrix      |      0.0 ms | **Pass** |
+| Floyd-Warshall | `fw_100.txt`       |          100 |       300 |    N/A | No             | Distance Matrix      | Distance Matrix      |     3.55 ms | **Pass** |
+| Floyd-Warshall | `fw_500.txt`       |          500 |     2,000 |    N/A | No             | Distance Matrix      | Distance Matrix      | 1256.743 ms | **Pass** |
+| Floyd-Warshall | `fw_1000.txt`      |        1,000 |     4,000 |    N/A | No             | Distance Matrix      | Distance Matrix      |  1904.99 ms | **Pass** |
+| Floyd-Warshall | `fw_2000.txt`      |        2,000 |     8,000 |    N/A | No             | Distance Matrix      | Distance Matrix      |  16091.3 ms | **Pass** |
+| Floyd-Warshall | `fw_neg_cycle.txt` |           10 |        25 |    N/A | Yes            | Negative cycle: true | Negative cycle: true |      0.0 ms | **Pass** |
 
-O(M×K×N)
+---
 
-and for square matrices:
+# 5. Performance Observations & Analysis
 
-O(N
-3
-)
+## 5.1 Negative Cycle Detection Behavior
 
-Therefore, blocking does not reduce the number of arithmetic operations required for matrix multiplication.
+### Bellman-Ford (`bf_neg_cycle.txt`)
 
-Instead, its primary benefit comes from improving memory access patterns and cache locality.
+When a negative cycle is reachable from source $s$, the additional $V^{\text{th}}$ pass detects continued edge relaxation.
 
-With a block size $B$, blocking allows matrix elements to be reused within smaller working sets before they are evicted from the cache. This can significantly reduce cache misses and improve practical execution time for large matrices.
+The implementation reports:
 
-Space Complexity
+```text
+Negative cycle: true
+```
 
-The auxiliary space complexity remains:
+The distance table is omitted when a negative cycle is detected.
 
-O(1)
+The measured runtime for this test case is **0.0 ms**.
 
-excluding the storage required for matrices $A$, $B$, and $C$.
+---
 
-6. Correctness Verification
+### Floyd-Warshall (`fw_neg_cycle.txt`)
 
-The implementation was tested using six different input cases ranging from very small matrices to large 1000×1000 matrices.
+After completing the triple nested loops, the implementation inspects the diagonal elements of the distance matrix.
 
-For every test case:
+A negative cycle exists if:
 
-The Simple GEMM implementation produced the expected result matrix.
-The Tiled/Blocking GEMM implementation produced the expected result matrix.
-The results of both implementations were identical.
-All six benchmark test cases passed successfully.
+$$
+\text{dist}[i][i] < 0
+$$
 
-Therefore, the benchmarking results demonstrate both correctness and performance characteristics of the two implementations.
+for any vertex $i$.
 
-7. Conclusion
+When detected, the implementation reports:
 
-The benchmarking results clearly illustrate the performance characteristics of General Matrix-Matrix Multiplication (GEMM).
+```text
+Negative cycle: true
+```
 
-The key conclusions are:
+and omits the distance matrix.
 
-Both Simple and Tiled GEMM implementations produce identical result matrices, confirming the correctness of the implementations.
-Simple GEMM has an $O(N^3)$ time complexity for square matrices, while Tiled GEMM retains the same asymptotic computational complexity.
-Loop tiling improves cache locality rather than reducing the number of arithmetic operations.
-For small matrices, the performance difference between the two implementations is negligible.
-At intermediate matrix sizes, the overhead introduced by blocking can occasionally make the Tiled implementation slower, as observed for the 256×256 test case.
-For large matrices, blocking becomes significantly beneficial. For the 1000×1000 test case:
-Simple GEMM: 1642.512 ms
-Blocking GEMM: 1049.240 ms
-Performance improvement: approximately 36.1%
-Input parsing, file I/O, matrix allocation, and result printing were strictly excluded from the algorithm execution timers, following the assignment timing requirements.
+The measured runtime for this test case is **0.0 ms**.
+
+---
+
+## 5.2 Scalability of Bellman-Ford on Sparse Graphs
+
+Bellman-Ford has a theoretical complexity of:
+
+$$
+O(V \cdot E)
+$$
+
+For the large graph inputs `bf_50000.txt` and `bf_100000.txt`, the edge count remains approximately:
+
+$$
+E \approx 3V
+$$
+
+This sparse edge ratio keeps the edge-relaxation workload manageable.
+
+The implementation scales to:
+
+$$
+V = 100,000
+$$
+
+with a measured average runtime of **27.529 ms**, without out-of-memory or core-dump exceptions.
+
+---
+
+## 5.3 Cubic Growth Profile of Floyd-Warshall
+
+Floyd-Warshall has a theoretical time complexity of:
+
+$$
+O(V^3)
+$$
+
+The benchmark results demonstrate the expected rapid increase in execution time as the number of vertices grows.
+
+| Vertices (V) | Runtime (AVG) |
+| -----------: | ------------: |
+|          100 |       3.55 ms |
+|          500 |   1256.743 ms |
+|        1,000 |    1904.99 ms |
+|        2,000 |    16091.3 ms |
+
+At $V = 2,000$, the algorithm performs approximately:
+
+$$
+V^3 = 2000^3 = 8 \times 10^9
+$$
+
+inner-loop iterations.
+
+The dense matrix also requires:
+
+$$
+O(V^2)
+$$
+
+memory, making memory consumption an additional limiting factor for large values of $V$.
+
+---
+
+## 5.4 Cross-Check Correctness Verification
+
+For scale sizes:
+
+$$
+V = 10
+$$
+
+and
+
+$$
+V = 100
+$$
+
+Bellman-Ford was executed by taking each vertex:
+
+$$
+i \in [0, V-1]
+$$
+
+as the source vertex.
+
+The resulting Bellman-Ford distance vectors were compared against the corresponding rows of the Floyd-Warshall distance matrix.
+
+The comparison produced:
+
+> **100% agreement across all tested vertex pairs.**
+
+This cross-validation confirms the correctness of both shortest-path implementations on the shared verification cases.
+
+---
+
+# 6. Algorithmic Complexity Analysis
+
+## 6.1 Bellman-Ford (CSR Input)
+
+### Time Complexity
+
+Bellman-Ford has a time complexity of:
+
+$$
+O(V \cdot E)
+$$
+
+The implementation performs up to $V-1$ relaxation passes over all $E$ edges stored in the CSR representation.
+
+This is followed by an additional $V^{\text{th}}$ pass for negative-cycle detection.
+
+### Space Complexity
+
+The auxiliary memory requirement is:
+
+$$
+O(V + E)
+$$
+
+This includes:
+
+* CSR row pointer array
+* CSR column index array
+* CSR edge-value array
+* Distance array
+
+---
+
+## 6.2 Floyd-Warshall (Matrix Input)
+
+### Time Complexity
+
+Floyd-Warshall has a time complexity of:
+
+$$
+O(V^3)
+$$
+
+The core recurrence is:
+
+$$
+\text{dist}[i][j]
+=================
+
+\min
+\left(
+\text{dist}[i][j],
+\text{dist}[i][k] + \text{dist}[k][j]
+\right)
+$$
+
+This computation is performed using three nested loops over the vertices.
+
+After the main computation, an additional diagonal scan is performed in:
+
+$$
+O(V)
+$$
+
+time to detect negative cycles.
+
+### Space Complexity
+
+The algorithm requires:
+
+$$
+O(V^2)
+$$
+
+space to store the dense $V \times V$ distance matrix.
+
+---
+
+## 6.3 Complexity Comparison
+
+| Algorithm      | Problem Type                | Representation     | Time Complexity | Space Complexity |
+| -------------- | --------------------------- | ------------------ | --------------- | ---------------- |
+| Bellman-Ford   | Single-Source Shortest Path | CSR / Sparse Graph | $O(VE)$         | $O(V+E)$         |
+| Floyd-Warshall | All-Pairs Shortest Path     | Dense Matrix       | $O(V^3)$        | $O(V^2)$         |
+
+---
+
+# 7. Conclusion
+
+## 7.1 Algorithmic Correctness
+
+Both **Bellman-Ford** and **Floyd-Warshall** produced correct shortest-path results on the shared verification test cases:
+
+* `bf_10.txt` / `fw_10.txt`
+* `bf_100.txt` / `fw_100.txt`
+
+The cross-check between Bellman-Ford distance vectors and corresponding Floyd-Warshall matrix rows resulted in **100% agreement**.
+
+---
+
+## 7.2 Robust Fault Detection
+
+Both implementations reliably detect negative-weight cycles.
+
+When a negative cycle is detected, both algorithms correctly report:
+
+```text
+Negative cycle: true
+```
+
+This behavior satisfies the required assignment specification.
+
+---
+
+## 7.3 Execution Profiling Separation
+
+The benchmarking methodology strictly separates preprocessing from algorithm execution.
+
+The following operations are excluded from measured execution time:
+
+* CSR conversion
+* Matrix reading
+* Text parsing
+* Dynamic memory allocation
+* File I/O
+* Result printing
+
+Therefore, the reported runtimes represent the measured execution cost of the shortest-path algorithms themselves.
+
+---
+
+# 8. Overall Summary
+
+| Component                   | Algorithm                       | Representation      | Complexity            | Status             |
+| --------------------------- | ------------------------------- | ------------------- | --------------------- | ------------------ |
+| Single-Source Shortest Path | Bellman-Ford                    | CSR                 | $O(VE)$               | **Completed**      |
+| All-Pairs Shortest Path     | Floyd-Warshall                  | Dense Matrix        | $O(V^3)$              | **Completed**      |
+| Negative Cycle Detection    | Both Algorithms                 | CSR / Matrix        | Included in execution | **Passed**         |
+| Correctness Cross-Check     | Bellman-Ford vs. Floyd-Warshall | Distance comparison | —                     | **100% Agreement** |
+| Benchmarking                | 4-run average                   | —                   | —                     | **Completed**      |
+
+
