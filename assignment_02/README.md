@@ -13,7 +13,7 @@ This directory contains the source implementations, compiled drivers, test cases
 The implementation includes:
 
 * **Bellman-Ford (Single-Source Shortest Path):** Computes shortest distances from a single source vertex to all reachable vertices on directed graphs supporting negative edge weights using Compressed Sparse Row (CSR) representation. It includes a $V^{\text{th}}$ pass for negative cycle detection.
-* **Floyd-Warshall (All-Pairs Shortest Path):** Computes shortest paths between all pairs of vertices in a directed graph using dynamic programming over an adjacency matrix. It identifies negative cycles by inspecting matrix diagonals where $\text{dist}[i][i] < 0$.
+* **Floyd-Warshall (All-Pairs Shortest Path):** Computes shortest paths between all pairs of vertices in a directed graph using dynamic programming over an adjacency matrix. It identifies negative cycles by inspecting matrix diagonals where $\mathrm{dist}[i][i] < 0$.
 
 ### Timing Rule Compliance
 
@@ -238,7 +238,7 @@ After completing the triple nested loops, the implementation inspects the diagon
 A negative cycle exists if:
 
 $$
-\text{dist}[i][i] < 0
+\mathrm{dist}[i][i] < 0
 $$
 
 for any vertex $i$.
@@ -289,7 +289,7 @@ $$
 O(V^3)
 $$
 
-The benchmark results demonstrate the expected rapid increase in execution time as the number of vertices grows.
+The benchmark results demonstrate the expected increase in execution time as the number of vertices grows.
 
 | Vertices (V) | Runtime (AVG) |
 | -----------: | ------------: |
@@ -394,13 +394,12 @@ $$
 The core recurrence is:
 
 $$
-\text{dist}[i][j]
-=================
+\mathrm{dist}[i][j]
+===================
 
-\min
-\left(
-\text{dist}[i][j],
-\text{dist}[i][k] + \text{dist}[k][j]
+\min\left(
+\mathrm{dist}[i][j],
+\mathrm{dist}[i][k] + \mathrm{dist}[k][j]
 \right)
 $$
 
@@ -488,5 +487,4 @@ Therefore, the reported runtimes represent the measured execution cost of the sh
 | Negative Cycle Detection    | Both Algorithms                 | CSR / Matrix        | Included in execution | **Passed**         |
 | Correctness Cross-Check     | Bellman-Ford vs. Floyd-Warshall | Distance comparison | —                     | **100% Agreement** |
 | Benchmarking                | 4-run average                   | —                   | —                     | **Completed**      |
-
 
