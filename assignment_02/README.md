@@ -229,19 +229,11 @@ The distance table is omitted when a negative cycle is detected.
 
 The measured runtime for this test case is **0.0 ms**.
 
----
-
 ### Floyd-Warshall (`fw_neg_cycle.txt`)
 
 After completing the triple nested loops, the implementation inspects the diagonal elements of the distance matrix.
 
-A negative cycle exists if:
-
-$$
-\mathrm{dist}[i][i] < 0
-$$
-
-for any vertex $i$.
+A negative cycle exists if $\mathrm{dist}[i][i] < 0$ for any vertex $i$.
 
 When detected, the implementation reports:
 
@@ -318,25 +310,7 @@ memory, making memory consumption an additional limiting factor for large values
 
 ## 5.4 Cross-Check Correctness Verification
 
-For scale sizes:
-
-$$
-V = 10
-$$
-
-and
-
-$$
-V = 100
-$$
-
-Bellman-Ford was executed by taking each vertex:
-
-$$
-i \in [0, V-1]
-$$
-
-as the source vertex.
+For scale sizes $V = 10$ and $V = 100$, Bellman-Ford was executed by taking each vertex $i \in [0, V-1]$ as the source vertex.
 
 The resulting Bellman-Ford distance vectors were compared against the corresponding rows of the Floyd-Warshall distance matrix.
 
@@ -393,15 +367,7 @@ $$
 
 The core recurrence is:
 
-$$
-\mathrm{dist}[i][j]
-===================
-
-\min\left(
-\mathrm{dist}[i][j],
-\mathrm{dist}[i][k] + \mathrm{dist}[k][j]
-\right)
-$$
+$\mathrm{dist}[i][j] = \min\left(\mathrm{dist}[i][j],\ \mathrm{dist}[i][k] + \mathrm{dist}[k][j]\right)$
 
 This computation is performed using three nested loops over the vertices.
 
