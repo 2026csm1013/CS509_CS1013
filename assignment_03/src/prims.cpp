@@ -55,7 +55,7 @@ int main( int argc, char* argv[])  {
     // strt from 0 nod
     vis[0] = true;
 
-    
+
     for (int i = g.rowPtr[0]; i < g.rowPtr[1]; i++) {
 
         int nbr = g.colIndic[i];
