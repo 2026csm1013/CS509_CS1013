@@ -1,17 +1,21 @@
 #include "csr.hpp"
 
-int main(int argc,char* argv[]) {
+int main( int argc, char* argv[] )   {
 
-    if(argc <2) {
-        cerr <<"Usage:"<< argv[0]<<"<input_file_path>\n";
+    if ( argc < 2) {
+
+        cerr << "input file path not provided.\n";
         return 1;
     }
 
-    string filePath = argv[1];
+    string fileLoc = argv[1];
 
-    //parse input file and output CSR 
-    csrGraph g= graphToCSR(filePath);
+
+    // pars inpt and outp CSR
+    csrGraph g =  graphToCSR(fileLoc);
     printCSR(g);
 
     return 0;
+
+
 }
