@@ -53,6 +53,7 @@ bool verifyColor(const csrGraph& g, const vector<int>& col) {
         }
     }
 
+
     return true;
 }
 
@@ -168,6 +169,8 @@ int main(int argc, char* argv[]) {
         degArr[u] = {d, u};
     }
 
+
+
     // sort degs
     sort(degArr.begin(), degArr.end(), compDeg);
 
@@ -246,4 +249,5 @@ int main(int argc, char* argv[]) {
     cout << "Execution time: " << totalTime << " ms\n";
 
     return 0;
+    
 }
