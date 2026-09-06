@@ -77,7 +77,7 @@ int main() {
 
     srand(time(0));
 
-    // required sizes from section 4.2
+    
     genColorGraph(10, 3, "tests/color_10.txt");
     genColorGraph(100, 4, "tests/color_100.txt");
     genColorGraph(10000, 4, "tests/color_10000.txt");
