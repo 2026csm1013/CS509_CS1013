@@ -54,9 +54,11 @@ int main(int argc, char* argv[]) {
         cout << " 4. Run Floyd-Warshall All-Pairs Shortest Path\n";
         cout << " 5. Run Kruskal's Minimum Spanning Tree (MST)\n";
         cout << " 6. Run Prim's Minimum Spanning Tree (MST)\n";
-        cout << " 7. Exit Wrapper\n";
+        cout << " 7. Run Greedy Vertex Coloring (CSR)\n";
+        cout << " 8. Run PageRank Algorithm (CSR)\n";
+        cout << " 9. Exit Wrapper\n";
         cout << "==================================================\n";
-        cout << "Enter your choice (1-7): ";
+        cout << "Enter your choice (1-9): ";
 
         if (!(cin >> usrOpt)) {
 
@@ -65,7 +67,7 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        if (usrOpt == 7) {
+        if (usrOpt == 9) {
 
             cout << "Exiting Common Wrapper. Goodbye!\n";
             break;
@@ -109,8 +111,20 @@ int main(int argc, char* argv[]) {
                 execCmd("assignment_03", "prims_runner.exe", testPath);
                 break;
 
+            case 7:
+                cout << "Enter Vertex Coloring test file path (e.g., tests/color_10.txt): ";
+                cin >> testPath;
+                execCmd("assignment_04", "vertex_coloring_runner.exe", testPath);
+                break;
+
+            case 8:
+                cout << "Enter PageRank test file path (e.g., tests/pagerank_10.txt): ";
+                cin >> testPath;
+                execCmd("assignment_04", "pagerank_runner.exe", testPath);
+                break;
+
             default:
-                cout << "Invalid choice! Please select 1 to 7.\n";
+                cout << "Invalid choice! Please select 1 to 9.\n";
                 break;
         }
     }

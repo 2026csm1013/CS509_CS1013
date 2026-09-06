@@ -160,6 +160,7 @@ int main(int argc, char* argv[]) {
 
         cerr << "input validation failed\n";
         return 1;
+
     }
 
     // read graph
@@ -179,6 +180,7 @@ int main(int argc, char* argv[]) {
 
         int d = g.rowPtr[u + 1] - g.rowPtr[u];
         degArr[u] = {d, u};
+
     }
 
     // sort degs
@@ -205,7 +207,10 @@ int main(int argc, char* argv[]) {
             if (col[nbr] != -1) {
 
                 takenColors.push_back(col[nbr]);
+
             }
+
+
         }
 
         // sort colors
@@ -245,7 +250,7 @@ int main(int argc, char* argv[]) {
 
     bool isValid = verifyColor(g, col);
 
-    // print output
+  
     cout << "Algorithm: Greedy Vertex Coloring\n";
     cout << "Vertex colors:\n";
 
