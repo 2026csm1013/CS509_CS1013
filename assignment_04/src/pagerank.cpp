@@ -1,70 +1,21 @@
+//g++ -O3 assignment_04/src/pagerank.cpp -o assignment_04/driver/pagerank_runner.exe
+//g++ -O3 assignment_04\src\vertex_coloring.cpp -o assignment_04\driver\vertex_coloring_runner.exe
+//.\assignment_04\driver\vertex_coloring_runner.exe assignment_04\tests\color_10.txt
+
 #include <iostream>
 #include <vector>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <chrono>
-#include <algorithm>
+#include <cmath>
+#include <iomanip>
 #include "../../assignment_01/src/csr.hpp"
 
 using namespace std;
 
-// nod deg struct
-struct NodDeg {
 
-    int deg;
-    int u;
-
-};
-
-// sort by deg
-bool compDeg(NodDeg a, NodDeg b) {
-
-    if (a.deg != b.deg) {
-
-        return a.deg > b.deg;
-    }
-
-    return a.u < b.u;
-
-}
-
-// verify coloring
-bool verifyColor(const csrGraph& g, const vector<int>& col) {
-
-    int totalNod = g.numNodes;
-
-    for (int u = 0; u < totalNod; u++) {
-
-        if (col[u] == -1) {
-
-            return false;
-        }
-
-        int stIdx = g.rowPtr[u];
-        int endIdx = g.rowPtr[u + 1];
-
-        for (int i = stIdx; i < endIdx; i++) {
-
-            int nbr = g.colIndic[i];
-
-            if (u != nbr && col[u] == col[nbr]) {
-
-                return false;
-
-            }
-        }
-
-
-    }
-
-
-
-    return true;
-}
-
-// validate inpt
-bool checkInputFile(const string& filePath) {
+bool readConfig(const string& filePath, double& d, double& tol, int& maxIt) {
 
     ifstream fin(filePath);
 
@@ -72,77 +23,130 @@ bool checkInputFile(const string& filePath) {
 
         cerr << "file not opening " << filePath << "\n";
         return false;
+
+
     }
 
 
-    int n, m;
+    string token;
 
-    if (!(fin >> n >> m)) {
+    while (fin >> token) {
 
-        cerr << "invalid dimensions\n";
+
+        if (token == "DAMPING") {
+
+            fin >> d;
+        } else if (token == "TOLERANCE") {
+
+            fin >> tol;
+        } else if (token == "MAX_ITERATIONS") {
+
+            fin >> maxIt;
+        }
+
+
+    }
+
+    fin.close();
+
+
+    if (d <= 0.0 || d >= 1.0) {
+
+        cerr << "invalid damping\n";
         return false;
     }
 
+    if (tol <= 0.0) {
+
+        cerr << "invalid tolerance\n";
+        return false;
+
+    }
+
+    if (maxIt <= 0) {
+
+        cerr << "invalid max iterations\n";
+        return false;
+    }
+
+    return true;
+
+
+}
+
+
+csrGraph readDirectedGraph(const string& filePath )  {
+
+    ifstream fin(filePath);
+
+
+    if (!fin.is_open() )   {
+
+        cerr << "file not opening " << filePath << "\n";
+        exit(1);
+
+
+
+    }
+
+    int n, m;
+    fin >> n >> m;
+
+    csrGraph g;
+    g.numNodes = n;
+    g.numEdges = m;
+    g.rowPtr.resize(n + 1, 0);
+
+    vector<vector<int>> adjList(n);
     string line;
     getline(fin, line);
 
     int lineCount = 0;
 
-    while (lineCount < n && getline(fin, line)) {
+    while (lineCount < n && getline(fin, line) )   {
+
 
         if (line.empty()) continue;
 
         stringstream ss(line);
         int u, deg;
+        ss >> u >> deg;
 
-        if (!(ss >> u >> deg)) {
+        for (int i = 0; i < deg; i++) {
 
-            cerr << "corrupted vertex header\n";
-            return false;
-        }
+            int v;
+            if (ss >> v) {
 
+                adjList[u].push_back(v);
 
-        if (u < 0 || u >= n) {
-
-            cerr << "vertex id out of bounds: " << u << "\n";
-            return false;
-        }
-
-
-
-        int neighborCount = 0;
-        int v;
-
-        while (ss >> v) {
-
-            if (v < 0 || v >= n) {
-
-                cerr << "neighbor id out of bounds: " << v << "\n";
-                return false;
             }
-
-
-            if (u == v) {
-
-                cerr << "self-loop detected at node: " << u << "\n";
-                return false;
-            }
-
-            neighborCount++;
-        }
-
-        if (neighborCount != deg) {
-
-            cerr << "mismatch in degree count for node: " << u << "\n";
-            return false;
         }
 
         lineCount++;
+
+
     }
-    
 
     fin.close();
-    return true;
+
+ 
+    int totalEdges = 0;
+
+    for (int i = 0; i < n; i++) {
+
+        g.rowPtr[i] = totalEdges;
+
+        for (int j = 0; j < adjList[i].size(); j++) {
+
+            int v = adjList[i][j];
+            g.colIndic.push_back(v);
+            g.valList.push_back(1);
+            totalEdges++;
+        }
+    }
+
+    g.rowPtr[n] = totalEdges;
+    return g;
 }
 
 int main(int argc, char* argv[]) {
@@ -155,112 +159,136 @@ int main(int argc, char* argv[]) {
 
     string fileLoc = argv[1];
 
-    // check inpt
-    if (!checkInputFile(fileLoc)) {
+    double d = 0.85;
+    double tol = 0.0001;
+    int maxIt = 100;
 
-        cerr << "input validation failed\n";
+    if (!readConfig(fileLoc, d, tol, maxIt)) {
+
+        cerr << "config reading failed\n";
         return 1;
+    }
+
+    
+    csrGraph g = readDirectedGraph(fileLoc);
+
+    int totalNod = g.numNodes;
+    vector<double> curRk(totalNod, 1.0 / totalNod);
+    vector<double> nxtRk(totalNod, 0.0);
+
+    vector<int> outDeg(totalNod, 0);
+
+    for (int u = 0; u < totalNod; u++) {
+
+        outDeg[u] = g.rowPtr[u + 1] - g.rowPtr[u];
+
+
 
     }
 
-    // read graph
-    csrGraph g = graphToCSR(fileLoc);
 
-    int totalNod = g.numNodes;
-    vector<int> col(totalNod, -1);
-    int totalColors = 0;
+
+    double baseScore = (1.0 - d) / totalNod;
+    int iter = 0;
+    bool isConv = false;
+
 
     // start timer
     auto tStart = chrono::high_resolution_clock::now();
 
-    // get degs from csr
-    vector<NodDeg> degArr(totalNod);
-
-    for (int u = 0; u < totalNod; u++) {
-
-        int d = g.rowPtr[u + 1] - g.rowPtr[u];
-        degArr[u] = {d, u};
-
-    }
-
-    // sort degs
-    sort(degArr.begin(), degArr.end(), compDeg);
-
-    // greedy pick
-    vector<int> takenColors;
-    int highestColor = 0;
-
-    for (int i = 0; i < totalNod; i++) {
-
-        int u = degArr[i].u;
-
-        int stIdx = g.rowPtr[u];
-        int endIdx = g.rowPtr[u + 1];
-
-        // get nbr colors
-        takenColors.clear();
-
-        for (int j = stIdx; j < endIdx; j++) {
-
-            int nbr = g.colIndic[j];
-
-            if (col[nbr] != -1) {
-
-                takenColors.push_back(col[nbr]);
-
-            }
 
 
-        }
+    // pagerank loop
+    while (iter < maxIt)   {
 
-        // sort colors
-        sort(takenColors.begin(), takenColors.end());
-        takenColors.erase(unique(takenColors.begin(), takenColors.end()), takenColors.end());
+        iter++;
 
-        // pick color
-        int assigned = 0;
+        //dangling nod
+        double dangScore = 0.0;
 
-        for (int c : takenColors) {
+        for (int u = 0; u < totalNod; u++) {
 
-            if (c == assigned) {
+            if (outDeg[u] == 0) {
 
-                assigned++;
-            } else if (c > assigned) {
-
-                break;
+                dangScore = dangScore + curRk[u];
             }
         }
 
-        col[u] = assigned;
+        double dangShare = (d * dangScore) / totalNod;
 
-        if (assigned > highestColor) {
 
-            highestColor = assigned;
+
+        // base rank init
+        for (int i = 0; i < totalNod; i++) {
+
+            nxtRk[i] = baseScore + dangShare;
         }
-    }
 
-    if (totalNod > 0) {
+        // push ranks along csr edges
+        for (int u = 0; u < totalNod; u++) {
 
-        totalColors = highestColor + 1;
+            if (outDeg[u] > 0) {
+
+                double contribution = (d * curRk[u]) / outDeg[u];
+                int stIdx = g.rowPtr[u];
+                int endIdx = g.rowPtr[u + 1];
+
+                for (int idx = stIdx; idx < endIdx; idx++) {
+
+                    int v = g.colIndic[idx];
+                    nxtRk[v] = nxtRk[v] + contribution;
+                }
+            }
+
+
+            
+        }
+
+  
+        double totalChange = 0.0;
+
+        for (int i = 0; i < totalNod; i++) {
+
+            totalChange = totalChange + fabs(nxtRk[i] - curRk[i]);
+            curRk[i] = nxtRk[i];
+        }
+
+        if (totalChange <= tol) {
+
+            isConv = true;
+            break;
+        }
+
+
     }
 
     auto tEnd = chrono::high_resolution_clock::now();
 
-    double totalTime = chrono::duration_cast<chrono::microseconds>(tEnd - tStart).count() / 1000.0;
+    chrono::duration<double, milli> elapsed = tEnd - tStart;
+    double totalTime = elapsed.count();
 
-    bool isValid = verifyColor(g, col);
-
-  
-    cout << "Algorithm: Greedy Vertex Coloring\n";
-    cout << "Vertex colors:\n";
+    
+    double sumRk = 0.0;
 
     for (int i = 0; i < totalNod; i++) {
 
-        cout << i << " " << col[i] << "\n";
+        sumRk = sumRk + curRk[i];
     }
 
-    cout << "Colors used: " << totalColors << "\n";
-    cout << "Valid: " << (isValid ? "Yes" : "No") << "\n";
+    cout << "Algorithm: PageRank\n";
+    cout << "Damping: " << d << "\n";
+    cout << "Vertex ranks:\n";
+
+    cout << fixed << setprecision(6);
+
+    for (int i = 0; i < totalNod; i++) {
+
+        cout << i << " " << curRk[i] << "\n";
+    }
+
+    cout << "Sum of ranks: " << sumRk << "\n";
+    cout << "Iterations: " << iter << "\n";
+    cout << "Converged: " << (isConv ? "true" : "false") << "\n";
     cout << "Execution time: " << totalTime << " ms\n";
 
     return 0;

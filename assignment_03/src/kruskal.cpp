@@ -123,7 +123,6 @@ int main(int argc, char* argv[]) {
 
     double totalTime = chrono::duration_cast<chrono::microseconds>(tEnd - tStart).count() / 1000.0;
 
-    // print output
     cout << "Algorithm: Kruskal's MST\n";
     cout << "MST edges:\n";
 

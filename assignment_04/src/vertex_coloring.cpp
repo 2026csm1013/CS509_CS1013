@@ -5,29 +5,36 @@
 #include <string>
 #include <chrono>
 #include <algorithm>
+#include <iomanip>
 #include "../../assignment_01/src/csr.hpp"
 
 using namespace std;
 
-// nod deg struct
+
 struct NodDeg {
 
     int deg;
     int u;
+
+
 };
 
-// sort by deg
-bool compDeg(NodDeg a, NodDeg b) {
+
+
+bool compDeg(const NodDeg& a, const NodDeg& b) {
 
     if (a.deg != b.deg) {
 
         return a.deg > b.deg;
     }
 
+
     return a.u < b.u;
 }
 
-// verify coloring
+
+
+
 bool verifyColor(const csrGraph& g, const vector<int>& col) {
 
     int totalNod = g.numNodes;
@@ -38,6 +45,8 @@ bool verifyColor(const csrGraph& g, const vector<int>& col) {
 
             return false;
         }
+
+
 
         int stIdx = g.rowPtr[u];
         int endIdx = g.rowPtr[u + 1];
@@ -50,14 +59,15 @@ bool verifyColor(const csrGraph& g, const vector<int>& col) {
 
                 return false;
             }
+
+
         }
     }
 
-
     return true;
+
 }
 
-// validate inpt
 bool checkInputFile(const string& filePath) {
 
     ifstream fin(filePath);
@@ -66,14 +76,19 @@ bool checkInputFile(const string& filePath) {
 
         cerr << "file not opening " << filePath << "\n";
         return false;
+
+
     }
 
     int n, m;
 
-    if (!(fin >> n >> m)) {
+    if (!(fin >> n >> m)  ) {
+
 
         cerr << "invalid dimensions\n";
         return false;
+
+
     }
 
     string line;
@@ -81,17 +96,21 @@ bool checkInputFile(const string& filePath) {
 
     int lineCount = 0;
 
-    while (lineCount < n && getline(fin, line)) {
+    while ( lineCount < n && getline(fin, line))   {
+
+
 
         if (line.empty()) continue;
 
         stringstream ss(line);
         int u, deg;
 
+
         if (!(ss >> u >> deg)) {
 
             cerr << "corrupted vertex header\n";
             return false;
+
         }
 
         if (u < 0 || u >= n) {
@@ -109,6 +128,8 @@ bool checkInputFile(const string& filePath) {
 
                 cerr << "neighbor id out of bounds: " << v << "\n";
                 return false;
+
+                
             }
 
             if (u == v) {
@@ -133,34 +154,110 @@ bool checkInputFile(const string& filePath) {
     return true;
 }
 
+// graph to csr
+csrGraph readUndirectedGraph(const string& filePath) {
+
+    ifstream fin(filePath);
+
+    if (!fin.is_open() ) {
+
+
+        cerr << "file not opening " << filePath << "\n";
+        exit(1);
+
+
+    }
+
+    int n, m;
+    fin >> n >> m;
+
+    csrGraph g;
+    g.numNodes = n;
+    g.numEdges = m;
+    g.rowPtr.resize(n + 1, 0);
+
+    vector<vector<int>> adjList(n);
+    string line;
+    getline(fin, line);
+
+    int lineCount = 0;
+
+    while (lineCount < n && getline(fin, line ))  {
+
+
+        if (line.empty()) continue;
+
+        stringstream ss(line);
+        int u, deg;
+        ss >> u >> deg;
+
+
+        for (int i = 0; i < deg; i++) {
+
+            int v;
+            if (ss >> v) {
+
+                adjList[u].push_back(v);
+
+            }
+        }
+
+        lineCount++;
+
+
+    }
+
+    fin.close();
+
+    // build csr arrays
+    int totalEdges = 0;
+
+    for (int i = 0; i < n; i++)  {
+
+        g.rowPtr[i] = totalEdges;
+
+        for (int j = 0; j < adjList[i].size(); j++) {
+
+            int v = adjList[i][j];
+            g.colIndic.push_back(v);
+            g.valList.push_back(1);
+            totalEdges++;
+        }
+
+
+    }
+
+    g.rowPtr[n] = totalEdges;
+    return g;
+
+
+}
+
 int main(int argc, char* argv[]) {
 
     if (argc < 2) {
 
         cerr << "file path missing\n";
         return 1;
+
     }
 
     string fileLoc = argv[1];
 
-    // check inpt
     if (!checkInputFile(fileLoc)) {
 
-        cerr << "input validation failed\n";
         return 1;
     }
 
-    // read graph
-    csrGraph g = graphToCSR(fileLoc);
+   
+
+    csrGraph g = readUndirectedGraph(fileLoc);
 
     int totalNod = g.numNodes;
     vector<int> col(totalNod, -1);
     int totalColors = 0;
 
-    // start timer
-    auto tStart = chrono::high_resolution_clock::now();
 
-    // get degs from csr
     vector<NodDeg> degArr(totalNod);
 
     for (int u = 0; u < totalNod; u++) {
@@ -169,59 +266,66 @@ int main(int argc, char* argv[]) {
         degArr[u] = {d, u};
     }
 
+    
 
-
-    // sort degs
     sort(degArr.begin(), degArr.end(), compDeg);
 
-    // greedy pick
-    vector<int> takenColors;
+
+    auto tStart = chrono::high_resolution_clock::now();
+
+    // greedy coloring
+    vector<bool> usedCol(totalNod, false);
     int highestColor = 0;
 
-    for (int i = 0; i < totalNod; i++) {
+    for (int i = 0; i < totalNod; i++ )  {
+
 
         int u = degArr[i].u;
 
         int stIdx = g.rowPtr[u];
         int endIdx = g.rowPtr[u + 1];
 
-        // get nbr colors
-        takenColors.clear();
+        for (int j = stIdx; j < endIdx; j++) {
 
+            int nbr = g.colIndic[j];
+
+            if (col[nbr] != -1)  {
+
+
+
+                usedCol[col[nbr]] = true;
+            }
+        }
+
+        
+        int assigned = 0;
+
+        while (assigned < totalNod && usedCol[assigned]) {
+
+            assigned++;
+        }
+
+        col[u] = assigned;
+
+        if ( assigned > highestColor) {
+
+
+            highestColor = assigned;
+
+        }
+
+      
         for (int j = stIdx; j < endIdx; j++) {
 
             int nbr = g.colIndic[j];
 
             if (col[nbr] != -1) {
 
-                takenColors.push_back(col[nbr]);
+                usedCol[col[nbr]] = false;
             }
         }
 
-        // sort colors
-        sort(takenColors.begin(), takenColors.end());
-        takenColors.erase(unique(takenColors.begin(), takenColors.end()), takenColors.end());
 
-        // pick color
-        int assigned = 0;
-
-        for (int c : takenColors) {
-
-            if (c == assigned) {
-
-                assigned++;
-            } else if (c > assigned) {
-
-                break;
-            }
-        }
-
-        col[u] = assigned;
-
-        if (assigned > highestColor) {
-
-            highestColor = assigned;
-        }
     }
 
     if (totalNod > 0) {
@@ -231,7 +335,8 @@ int main(int argc, char* argv[]) {
 
     auto tEnd = chrono::high_resolution_clock::now();
 
-    double totalTime = chrono::duration_cast<chrono::microseconds>(tEnd - tStart).count() / 1000.0;
+    chrono::duration<double, milli> elapsed = tEnd - tStart;
+    double totalTime = elapsed.count();
 
     bool isValid = verifyColor(g, col);
 
@@ -244,10 +349,14 @@ int main(int argc, char* argv[]) {
         cout << i << " " << col[i] << "\n";
     }
 
+
+
     cout << "Colors used: " << totalColors << "\n";
     cout << "Valid: " << (isValid ? "Yes" : "No") << "\n";
+    cout << fixed << setprecision(4);
     cout << "Execution time: " << totalTime << " ms\n";
 
     return 0;
+
     
 }
